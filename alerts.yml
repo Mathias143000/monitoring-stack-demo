@@ -1,0 +1,38 @@
+groups:
+  - name: monitoring-demo
+    rules:
+      - alert: MonitoringDemoAppDown
+        expr: up{job="app"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: Monitoring demo app is down
+          description: Prometheus cannot scrape the Flask app metrics endpoint.
+
+      - alert: MonitoringDemoErrorResponses
+        expr: sum(rate(app_http_errors_total[5m])) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: Monitoring demo app serves error responses
+          description: The synthetic app returned HTTP 4xx/5xx during the last 5 minutes.
+
+      - alert: MonitoringDemoOverdueTickets
+        expr: app_tickets_overdue > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: Overdue tickets detected
+          description: Open tickets are older than the configured overdue threshold.
+
+      - alert: MonitoringDemoInfluxWriteFailures
+        expr: increase(app_influx_write_failures_total[10m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: InfluxDB export failures detected
+          description: The app failed to export business metrics to InfluxDB during the last 10 minutes.
