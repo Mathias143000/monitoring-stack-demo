@@ -13,5 +13,8 @@ venv/
 .idea/
 .vscode/
 data/
+artifacts/
 .DS_Store
 Thumbs.db
+*.log
+todo.md
