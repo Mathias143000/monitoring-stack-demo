@@ -2,7 +2,20 @@
 
 Локальный observability-стенд, собранный вокруг небольшого Flask-приложения с пользователями и тикетами.
 
-Проект показывает, как из маленького сервиса собрать воспроизводимый стенд для метрик, алертов, synthetic checks и dashboard provisioning. Репозиторий одновременно играет роль demo-сервиса и локального “полигона наблюдаемости”.
+Проект показывает, как из маленького сервиса собрать воспроизводимый стенд для метрик, алертов, synthetic checks и dashboard provisioning. Репозиторий одновременно играет роль demo-сервиса и локального SRE/observability lab.
+
+## Portfolio Role
+
+Это основной observability / SRE flagship в портфолио.
+
+Открывать этот репозиторий лучше, когда разговор идет про:
+
+- Prometheus, Grafana и Alertmanager как единый operator flow
+- synthetic checks и alerting
+- dashboard provisioning и читаемую rule model
+- CI, который валидирует monitoring-репозиторий, а не только Python-код
+
+В общей структуре портфолио этот репозиторий дополняет `enterprise-onprem-platform-lab`: platform lab показывает более широкую инфраструктурную оболочку, а этот репозиторий идет глубже в сигналы, alerts и расследование инцидентов.
 
 ## Что показывает проект
 
@@ -13,6 +26,17 @@
 - Alert rules для типовых operational-сценариев
 - Воспроизводимый локальный стек через Docker Compose
 - Тесты, линтинг, ignore-файлы и CI
+
+## Review Path
+
+Для быстрого технического ревью полезнее всего идти в таком порядке:
+
+1. этот README для scope и demo flow
+2. `docker-compose.yml` для общей топологии стенда
+3. `prometheus.yml` и `alerts.yml` для scrape и alerting model
+4. `grafana/provisioning/` и `grafana/dashboards/app-overview.json` для datasource/dashboard story
+5. `monitoring_demo/app.py` и `monitoring_demo/metrics.py` для того, что именно экспортирует приложение
+6. `.github/workflows/ci.yml` и `tests/test_app.py` для validation story
 
 ## Стек
 
