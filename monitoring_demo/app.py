@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import logging
 import time
+from uuid import uuid4
 
-from flask import Flask, Response, jsonify, request
+from flask import Flask, Response, g, jsonify, request
 
 from .config import Settings
 from .db import (
@@ -26,13 +27,7 @@ from .metrics import (
     render_metrics,
     update_runtime_metrics,
 )
-
-
-def _configure_logging(log_level: str) -> None:
-    logging.basicConfig(
-        level=getattr(logging, log_level.upper(), logging.INFO),
-        format="%(asctime)s %(levelname)s %(name)s %(message)s",
-    )
+from .observability import configure_logging, setup_tracing
 
 
 def _parse_limit(raw_value: str | None, *, default: int = 50) -> int:
@@ -60,11 +55,12 @@ def _refresh_metrics(settings: Settings) -> tuple[bool, dict[str, int] | None]:
 
 def create_app(settings: Settings | None = None) -> Flask:
     settings = settings or Settings.from_env()
-    _configure_logging(settings.log_level)
+    configure_logging(settings.log_level, json_logs=settings.json_logs)
 
     app = Flask(__name__)
     app.config["SETTINGS"] = settings
     app.logger.setLevel(getattr(logging, settings.log_level.upper(), logging.INFO))
+    setup_tracing(app, settings)
 
     init_db(settings.db_path)
     influx_writer = InfluxWriter(settings)
@@ -73,6 +69,7 @@ def create_app(settings: Settings | None = None) -> Flask:
     @app.before_request
     def before_request() -> None:
         request._start_time = time.perf_counter()
+        g.request_id = request.headers.get(settings.request_id_header) or str(uuid4())
 
     @app.after_request
     def after_request(response: Response) -> Response:
@@ -92,12 +89,14 @@ def create_app(settings: Settings | None = None) -> Flask:
             record_influx_export(False)
 
         app.logger.info(
-            "request method=%s endpoint=%s status=%s duration_ms=%.2f",
+            "request request_id=%s method=%s endpoint=%s status=%s duration_ms=%.2f",
+            g.request_id,
             request.method,
             endpoint,
             response.status_code,
             latency * 1000,
         )
+        response.headers[settings.request_id_header] = g.request_id
         return response
 
     @app.get("/")
@@ -114,6 +113,7 @@ def create_app(settings: Settings | None = None) -> Flask:
                     "tickets": "/tickets",
                     "seed": "/demo/seed",
                     "error_demo": "/demo/error",
+                    "slow_demo": "/demo/slow?delay_ms=1200",
                 },
             }
         )
@@ -206,6 +206,12 @@ def create_app(settings: Settings | None = None) -> Flask:
     @app.get("/demo/error")
     def demo_error():
         return jsonify({"status": "error", "message": "Synthetic 503 for alert demo."}), 503
+
+    @app.get("/demo/slow")
+    def demo_slow():
+        delay_ms = max(50, min(int(request.args.get("delay_ms", 1200)), 5000))
+        time.sleep(delay_ms / 1000)
+        return jsonify({"status": "ok", "delay_ms": delay_ms})
 
     @app.get("/metrics")
     def metrics():

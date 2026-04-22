@@ -21,6 +21,11 @@ def client(tmp_path: Path):
         influx_org="org",
         influx_bucket="bucket",
         log_level="INFO",
+        json_logs=False,
+        tracing_enabled=False,
+        otel_service_name="monitoring-stack-demo-test",
+        otel_exporter_otlp_endpoint="http://otel-collector:4318",
+        request_id_header="X-Request-ID",
     )
     app = create_app(settings)
     app.config.update(TESTING=True)
@@ -87,3 +92,11 @@ def test_demo_error_endpoint_returns_503(client):
 
     assert response.status_code == 503
     assert response.get_json()["status"] == "error"
+
+
+def test_slow_demo_endpoint_sets_request_id(client):
+    response = client.get("/demo/slow?delay_ms=75")
+
+    assert response.status_code == 200
+    assert response.get_json()["delay_ms"] == 75
+    assert response.headers["X-Request-ID"]

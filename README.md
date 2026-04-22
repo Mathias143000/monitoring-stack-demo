@@ -1,5 +1,26 @@
 # Monitoring Stack Demo
 
+## Hardening Wave 2 Status
+
+This repository is now the observability / SRE hardening target for the portfolio.
+
+Closed in this wave:
+
+- Bash-first operator scripts for bootstrap, lint, tests, stack lifecycle, smoke, incident trigger, logs and evidence collection
+- CI/CD pipeline with quality checks, Docker Compose smoke validation and GHCR image publishing on `main` / tags
+- expanded local observability stack: `Prometheus`, `Grafana`, `Alertmanager`, `InfluxDB`, `Loki`, `Promtail`, `Tempo`, `OpenTelemetry Collector`, `Blackbox Exporter`, `node-exporter`, `cAdvisor` and `Nginx`
+- app metrics, synthetic checks, logs and traces wired into the demo flow
+- explicit Grafana credential policy through `.env.example`
+- failure evidence path through `scripts/collect-evidence.sh` and CI artifact upload
+
+Validated locally on Windows with:
+
+- `python -m pytest -q`
+- `python -m ruff check .`
+- `docker compose config --quiet`
+
+The Bash smoke path is designed for Linux / GitHub Actions runners. On this workstation it is covered by the repository CI because local `/bin/bash` is not available.
+
 Локальный observability-стенд, собранный вокруг небольшого Flask-приложения с пользователями и тикетами.
 
 Проект показывает, как из маленького сервиса собрать воспроизводимый стенд для метрик, алертов, synthetic checks и dashboard provisioning. Репозиторий одновременно играет роль demo-сервиса и локального SRE/observability lab.

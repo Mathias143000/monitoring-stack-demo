@@ -22,6 +22,11 @@ class Settings:
     influx_org: str
     influx_bucket: str
     log_level: str
+    json_logs: bool
+    tracing_enabled: bool
+    otel_service_name: str
+    otel_exporter_otlp_endpoint: str
+    request_id_header: str
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -39,4 +44,12 @@ class Settings:
             influx_org=os.getenv("INFLUX_ORG", "my-org"),
             influx_bucket=os.getenv("INFLUX_BUCKET", "app"),
             log_level=os.getenv("LOG_LEVEL", "INFO"),
+            json_logs=env_bool("JSON_LOGS", True),
+            tracing_enabled=env_bool("OTEL_TRACING_ENABLED", True),
+            otel_service_name=os.getenv("OTEL_SERVICE_NAME", "monitoring-stack-demo"),
+            otel_exporter_otlp_endpoint=os.getenv(
+                "OTEL_EXPORTER_OTLP_ENDPOINT",
+                "http://otel-collector:4318",
+            ),
+            request_id_header=os.getenv("REQUEST_ID_HEADER", "X-Request-ID"),
         )
